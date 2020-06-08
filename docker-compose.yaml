@@ -1,0 +1,53 @@
+version: "3.2"
+
+networks:
+  loki:
+
+volumes:
+  grafana_data:
+  loki_data:
+
+services:
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      loki:
+        aliases:
+          - grafana
+    volumes:
+      - type: bind
+        source: ./config/loki/local-config.yaml
+        target: /etc/loki/local-config.yaml
+        read_only: true
+      - type: volume
+        source: loki_data
+        target: /loki
+
+  # promtail:
+  #   image: grafana/promtail:latest
+  #   volumes:
+  #    - /var/log:/var/log
+  #    - ${PWD}/config/promtail/local-config.yaml:/etc/promtail/docker-config.yaml
+  #   command: -config.file=/etc/promtail/docker-config.yaml
+  #   networks:
+  #    - loki
+
+  grafana:
+    image: grafana/grafana:7.0.3
+    ports:
+      - "3000:3000"
+    networks:
+      loki:
+        aliases:
+          - grafana
+    volumes:
+      - type: volume
+        source: grafana_data
+        target: /var/lib/grafana
+    environment:
+      - "GF_SECURITY_ADMIN_PASSWORD=changeme"
+
+
